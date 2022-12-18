@@ -5,7 +5,7 @@ import com.comphenix.protocol.ProtocolManager;
 import io.github.lokka30.entitylabelsystem.bukkit.command.ElsCommand;
 import io.github.lokka30.entitylabelsystem.bukkit.listener.PacketLabelUpdateListener;
 import io.github.lokka30.entitylabelsystem.bukkit.packet.LabelUtil;
-import io.github.lokka30.entitylabelsystem.bukkit.packet.ProtocolLibLabelUtil;
+import io.github.lokka30.entitylabelsystem.bukkit.packet.protocollib.ProtocolLibLabelUtil;
 import io.github.lokka30.entitylabelsystem.bukkit.util.Metric;
 import java.util.Objects;
 import org.bukkit.Bukkit;

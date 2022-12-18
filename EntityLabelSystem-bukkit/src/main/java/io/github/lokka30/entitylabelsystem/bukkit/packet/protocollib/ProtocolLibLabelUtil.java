@@ -1,4 +1,4 @@
-package io.github.lokka30.entitylabelsystem.bukkit.packet;
+package io.github.lokka30.entitylabelsystem.bukkit.packet.protocollib;
 
 import static io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem.protocolManager;
 
@@ -14,6 +14,7 @@ import com.comphenix.protocol.wrappers.WrappedDataWatcher.Registry;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher.WrappedDataWatcherObject;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem;
+import io.github.lokka30.entitylabelsystem.bukkit.packet.LabelUtil;
 import io.github.lokka30.entitylabelsystem.bukkit.util.ClassUtils;
 import io.github.lokka30.entitylabelsystem.bukkit.util.Metric;
 import java.util.ArrayList;
@@ -46,8 +47,6 @@ public class ProtocolLibLabelUtil implements LabelUtil {
                 if(entity.getType() != EntityType.ZOMBIE) return;
 
                 final Zombie zombie = (Zombie) entity;
-                final String label = zombie.getName() + " (" + zombie.getHealth() + "♥)";
-
                 final WrappedDataWatcher dataWatcher =
                     WrappedDataWatcher.getEntityWatcher(zombie).deepClone();
 
@@ -57,8 +56,11 @@ public class ProtocolLibLabelUtil implements LabelUtil {
                 final WrappedDataWatcherObject optChatFieldWatcher =
                     new WrappedDataWatcherObject(2, chatSerializer);
 
-                final Optional<Object> optChatField =
-                    Optional.of(WrappedChatComponent.fromChatMessage(label)[0].getHandle());
+                final Optional<Object> optChatField = Optional.of(
+                    WrappedChatComponent.fromChatMessage(
+                        generateEntityLabel(zombie)
+                    )[0].getHandle()
+                );
 
                 dataWatcher.setObject(optChatFieldWatcher, optChatField);
 
@@ -96,13 +98,7 @@ public class ProtocolLibLabelUtil implements LabelUtil {
     }
 
     @Override
-    public void sendUpdatePacket(
-        final LivingEntity entity
-    ) {
-        for(final Player player : entity.getWorld().getPlayers()) {
-            sendUpdatePacket(entity, player);
-        }
-    }
+    public void unregisterListeners() {}
 
     @Override
     public void sendUpdatePacket(
