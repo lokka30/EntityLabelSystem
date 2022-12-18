@@ -1,0 +1,15 @@
+api-version: "1.18"
+authors: ["lokka30"]
+commands:
+  "els":
+    description: "Utilities to manage the ELS plugin."
+    usage: "/<command>"
+depend: ["ProtocolLib"]
+main: "io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem"
+name: "EntityLabelSystem"
+permissions:
+  "els.admin":
+    description: "Ability to manage the ELS plugin."
+    default: "op"
+version: "${project.version}"
+website: "https://github.com/lokka30/"

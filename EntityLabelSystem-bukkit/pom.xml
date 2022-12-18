@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.github.lokka30.entitylabelsystem</groupId>
+    <artifactId>EntityLabelSystem-Parent</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <artifactId>EntityLabelSystem-bukkit</artifactId>
+  <version>1.0.0-alpha-1</version>
+
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.comphenix.protocol</groupId>
+      <artifactId>ProtocolLib</artifactId>
+      <version>5.0.0-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+    <!--
+    <dependency>
+      <groupId>com.comphenix.packetwrapper</groupId>
+      <artifactId>PacketWrapper</artifactId>
+      <version>1.15.2-R0.1-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    -->
+    <dependency>
+      <groupId>org.jetbrains</groupId>
+      <artifactId>annotations</artifactId>
+      <version>23.1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <!--suppress VulnerableLibrariesLocal -->
+    <dependency>
+      <groupId>org.spigotmc</groupId>
+      <artifactId>spigot</artifactId>
+      <version>1.19.2-R0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <id>CodeMC</id>
+      <url>https://repo.codemc.org/repository/maven-public</url>
+    </repository>
+    <repository>
+      <id>dmulloy2-repo</id>
+      <url>https://repo.dmulloy2.net/repository/public/</url>
+    </repository>
+  </repositories>
+
+</project>
