@@ -1,11 +1,6 @@
 package io.github.lokka30.entitylabelsystem.bukkit.packet;
 
-import static io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem.debugLog;
 import static io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem.protocolManager;
-import static org.bukkit.ChatColor.AQUA;
-import static org.bukkit.ChatColor.GRAY;
-import static org.bukkit.ChatColor.GREEN;
-import static org.bukkit.ChatColor.RESET;
 
 import com.comphenix.protocol.PacketType.Play.Server;
 import com.comphenix.protocol.events.ListenerPriority;
@@ -34,8 +29,6 @@ public class ProtocolLibLabelUtil implements LabelUtil {
 
     @Override
     public void registerListeners() {
-        debugLog(GREEN + "Registering packet listener");
-
         protocolManager().addPacketListener(new PacketAdapter(
             EntityLabelSystem.instance(),
             ListenerPriority.NORMAL,
@@ -52,16 +45,8 @@ public class ProtocolLibLabelUtil implements LabelUtil {
                 if(entity == null) return;
                 if(entity.getType() != EntityType.ZOMBIE) return;
 
-                debugLog(AQUA + "Begun intercepting entity metadata packet.");
-
                 final Zombie zombie = (Zombie) entity;
                 final String label = zombie.getName() + " (" + zombie.getHealth() + "♥)";
-
-                debugLog(GRAY + "Data:");
-                debugLog(GRAY + " - Name: " + RESET + zombie.getName());
-                debugLog(GRAY + " - CustomName: " + RESET + zombie.getCustomName());
-                debugLog(GRAY + " - Label: " + RESET + label);
-                debugLog(GRAY + " - Recipient: " + RESET + event.getPlayer().getName());
 
                 final WrappedDataWatcher dataWatcher =
                     WrappedDataWatcher.getEntityWatcher(zombie).deepClone();
@@ -105,7 +90,6 @@ public class ProtocolLibLabelUtil implements LabelUtil {
                 
                 event.setPacket(packet);
                 Metric.metadataModified++;
-                debugLog(GREEN + "Entity metadata packet modified.");
 
             }
         });
@@ -125,10 +109,8 @@ public class ProtocolLibLabelUtil implements LabelUtil {
         final LivingEntity entity,
         final Player player
     ) {
-        debugLog(AQUA + "Sending update packet to '" + player.getName() + "'.");
         final PacketContainer packet = protocolManager().createPacket(Server.ENTITY_METADATA);
         packet.getIntegers().write(0, entity.getEntityId());
         protocolManager().sendServerPacket(player, packet);
-        debugLog(GREEN + "Update packet sent successfully.");
     }
 }
