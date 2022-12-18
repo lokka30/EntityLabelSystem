@@ -13,11 +13,16 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
+import com.comphenix.protocol.wrappers.WrappedDataValue;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher.Registry;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher.WrappedDataWatcherObject;
+import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem;
+import io.github.lokka30.entitylabelsystem.bukkit.util.ClassUtils;
 import io.github.lokka30.entitylabelsystem.bukkit.util.Metric;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -65,7 +70,7 @@ public class ProtocolLibLabelUtil implements LabelUtil {
                     Registry.getChatComponentSerializer(true);
 
                 final WrappedDataWatcherObject optChatFieldWatcher =
-                    new WrappedDataWatcher.WrappedDataWatcherObject(2, chatSerializer);
+                    new WrappedDataWatcherObject(2, chatSerializer);
 
                 final Optional<Object> optChatField =
                     Optional.of(WrappedChatComponent.fromChatMessage(label)[0].getHandle());
@@ -74,8 +79,29 @@ public class ProtocolLibLabelUtil implements LabelUtil {
 
                 dataWatcher.setObject(3, true); // set CustomNameVisible=true
 
-                packet.getWatchableCollectionModifier()
-                    .write(0, dataWatcher.getWatchableObjects());
+                if(ClassUtils
+                    .classExists("com.comphenix.protocol.wrappers.WrappedDataValue")
+                ) {
+                    final List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
+
+                    for(final WrappedWatchableObject entry : dataWatcher.getWatchableObjects()) {
+                        if(entry == null) continue;
+
+                        final WrappedDataWatcherObject watcherObject = entry.getWatcherObject();
+                        wrappedDataValueList.add(
+                            new WrappedDataValue(
+                                watcherObject.getIndex(),
+                                watcherObject.getSerializer(),
+                                entry.getRawValue()
+                            )
+                        );
+                    }
+
+                    packet.getDataValueCollectionModifier().write(0, wrappedDataValueList);
+                } else {
+                    packet.getWatchableCollectionModifier()
+                        .write(0, dataWatcher.getWatchableObjects());
+                }
                 
                 event.setPacket(packet);
                 Metric.metadataModified++;

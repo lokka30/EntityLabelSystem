@@ -1,4 +1,5 @@
 io/github/lokka30/entitylabelsystem/bukkit/listener/PacketLabelUpdateListener.class
+io/github/lokka30/entitylabelsystem/bukkit/util/ClassUtils.class
 io/github/lokka30/entitylabelsystem/bukkit/packet/ProtocolLibLabelUtil$1.class
 io/github/lokka30/entitylabelsystem/bukkit/command/ElsCommand.class
 io/github/lokka30/entitylabelsystem/bukkit/EntityLabelSystem$1.class

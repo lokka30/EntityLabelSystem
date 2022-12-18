@@ -1,5 +1,6 @@
 /Users/lach/Projects/Minecraft/EntityLabelSystem/EntityLabelSystem-bukkit/src/main/java/io/github/lokka30/entitylabelsystem/bukkit/listener/PacketLabelUpdateListener.java
 /Users/lach/Projects/Minecraft/EntityLabelSystem/EntityLabelSystem-bukkit/src/main/java/io/github/lokka30/entitylabelsystem/bukkit/packet/ProtocolLibLabelUtil.java
+/Users/lach/Projects/Minecraft/EntityLabelSystem/EntityLabelSystem-bukkit/src/main/java/io/github/lokka30/entitylabelsystem/bukkit/util/ClassUtils.java
 /Users/lach/Projects/Minecraft/EntityLabelSystem/EntityLabelSystem-bukkit/src/main/java/io/github/lokka30/entitylabelsystem/bukkit/EntityLabelSystem.java
 /Users/lach/Projects/Minecraft/EntityLabelSystem/EntityLabelSystem-bukkit/src/main/java/io/github/lokka30/entitylabelsystem/bukkit/command/ElsCommand.java
 /Users/lach/Projects/Minecraft/EntityLabelSystem/EntityLabelSystem-bukkit/src/main/java/io/github/lokka30/entitylabelsystem/bukkit/packet/LabelUtil.java
