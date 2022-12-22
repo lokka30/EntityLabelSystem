@@ -1,6 +1,8 @@
 package io.github.lokka30.entitylabelsystem.bukkit.packet;
 
 import java.util.concurrent.ThreadLocalRandom;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -23,6 +25,23 @@ public interface LabelUtil {
         final LivingEntity entity,
         final Player player
     );
+
+    default Component generateEntityLabelComponent(
+        final LivingEntity entity
+    ) {
+        final int lvl = ThreadLocalRandom.current().nextInt(1, 101);
+        final double health = (entity.getHealth() * 100) / 100;
+        //noinspection deprecation
+        final double maxHealth = (entity.getMaxHealth() * 100) / 100;
+
+        return Component.text("Lvl." + lvl + " ").color(NamedTextColor.BLUE)
+            .append(Component.text(entity.getName()).color(NamedTextColor.WHITE))
+            .append(Component.text("(").color(NamedTextColor.DARK_GRAY))
+            .append(Component.text(health).color(NamedTextColor.RED))
+            .append(Component.text("/").color(NamedTextColor.DARK_GRAY))
+            .append(Component.text(maxHealth + " ❤").color(NamedTextColor.RED))
+            .append(Component.text(")").color(NamedTextColor.DARK_GRAY));
+    }
 
     default String generateEntityLabel(
         final LivingEntity entity

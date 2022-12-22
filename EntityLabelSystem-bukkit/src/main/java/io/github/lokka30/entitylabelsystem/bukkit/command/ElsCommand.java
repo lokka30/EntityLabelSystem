@@ -6,7 +6,7 @@ import static org.bukkit.ChatColor.GRAY;
 import static org.bukkit.ChatColor.GREEN;
 import static org.bukkit.ChatColor.RED;
 
-import io.github.lokka30.entitylabelsystem.bukkit.util.Metric;
+import io.github.lokka30.entitylabelsystem.bukkit.util.DebugStat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -108,8 +108,8 @@ public class ElsCommand implements TabExecutor {
 
                 sender.sendMessage(
                     AQUA + "Test metrics for the current session:",
-                    GRAY + " • Entity metadata updates sent: " + Metric.metadataUpdates,
-                    GRAY + " • Entity metadata packets modified: " + Metric.metadataModified
+                    GRAY + " • Entity metadata updates sent: " + DebugStat.metadataUpdates,
+                    GRAY + " • Entity metadata packets modified: " + DebugStat.metadataModified
                 );
                 return true;
 

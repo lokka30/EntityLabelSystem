@@ -6,7 +6,7 @@ import io.github.lokka30.entitylabelsystem.bukkit.command.ElsCommand;
 import io.github.lokka30.entitylabelsystem.bukkit.listener.PacketLabelUpdateListener;
 import io.github.lokka30.entitylabelsystem.bukkit.packet.LabelUtil;
 import io.github.lokka30.entitylabelsystem.bukkit.packet.protocollib.ProtocolLibLabelUtil;
-import io.github.lokka30.entitylabelsystem.bukkit.util.Metric;
+import io.github.lokka30.entitylabelsystem.bukkit.util.DebugStat;
 import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -71,7 +71,7 @@ public class EntityLabelSystem extends JavaPlugin {
                     for(final LivingEntity entity : world.getLivingEntities()) {
                         if(entity.getType() != EntityType.ZOMBIE) continue;
                         LABEL_UTIL_IMPL.sendUpdatePacket(entity);
-                        Metric.metadataUpdates++;
+                        DebugStat.metadataUpdates++;
                     }
                 }
             }

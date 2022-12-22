@@ -16,7 +16,7 @@ import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem;
 import io.github.lokka30.entitylabelsystem.bukkit.packet.LabelUtil;
 import io.github.lokka30.entitylabelsystem.bukkit.util.ClassUtils;
-import io.github.lokka30.entitylabelsystem.bukkit.util.Metric;
+import io.github.lokka30.entitylabelsystem.bukkit.util.DebugStat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -91,7 +91,7 @@ public class ProtocolLibLabelUtil implements LabelUtil {
                 }
                 
                 event.setPacket(packet);
-                Metric.metadataModified++;
+                DebugStat.metadataModified++;
 
             }
         });
