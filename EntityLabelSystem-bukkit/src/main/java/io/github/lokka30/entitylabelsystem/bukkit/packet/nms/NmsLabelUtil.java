@@ -6,9 +6,27 @@ import io.github.lokka30.entitylabelsystem.bukkit.util.DebugStat;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.TranslatableComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.format.TextDecoration.State;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ComponentContents;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer;
@@ -39,6 +57,91 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 // player didn't have the packet listener in the pipeline - that's completely fine.
             }
         }
+    }
+
+    /*
+    Originally written by DMan16 @ SpigotMC.org
+     */
+    @Nullable
+    private MutableComponent adventureToNmsComponent(
+        final @Nullable net.kyori.adventure.text.Component advComp
+    ) {
+        if(advComp == null) return null;
+
+        final ComponentContents contents;
+        MutableComponent nmsComp;
+        String textContent = null;
+
+        if(advComp instanceof final TextComponent textComponent) {
+            textContent = textComponent.content();
+            contents = new LiteralContents(textContent);
+        } else if(advComp instanceof final TranslatableComponent translatableComponent) {
+            if(translatableComponent.args().isEmpty()) {
+                contents = new TranslatableContents(translatableComponent.key());
+            } else {
+                contents = new TranslatableContents(
+                    translatableComponent.key(),
+                    translatableComponent.args().stream()
+                        .map(this::adventureToNmsComponent)
+                        .filter(Objects::nonNull)
+                        .toArray()
+                );
+            }
+        } else {
+            return null;
+        }
+
+        nmsComp = MutableComponent.create(contents);
+
+        net.kyori.adventure.text.format.TextColor advColor = advComp.color();
+        TextColor nmsColor = null;
+        if(advColor != null) {
+            if(advColor instanceof final NamedTextColor named) {
+                nmsColor = TextColor.fromLegacyFormat(
+                    ChatFormatting.getByName(named.toString())
+                );
+            } else {
+                nmsColor = TextColor.fromRgb(advColor.value());
+            }
+        }
+        Style nmsStyle = Style.EMPTY;
+        if(nmsColor != null)
+            nmsStyle = nmsStyle.withColor(nmsColor);
+
+        final Function<TextDecoration, Boolean> hasDecoration = (decoration) ->
+            advComp.decoration(decoration) == State.TRUE;
+
+        if(hasDecoration.apply(TextDecoration.BOLD))
+            nmsStyle = nmsStyle.withBold(true);
+        if(hasDecoration.apply(TextDecoration.ITALIC))
+            nmsStyle = nmsStyle.withItalic(true);
+        if(hasDecoration.apply(TextDecoration.OBFUSCATED))
+            nmsStyle = nmsStyle.withObfuscated(true);
+        if(hasDecoration.apply(TextDecoration.STRIKETHROUGH))
+            nmsStyle = nmsStyle.withStrikethrough(true);
+        if(hasDecoration.apply(TextDecoration.UNDERLINED))
+            nmsStyle = nmsStyle.withUnderlined(true);
+
+        nmsComp.setStyle(nmsStyle);
+
+        if(advComp.children().isEmpty())
+            return nmsComp;
+
+        List<MutableComponent> nmsChildren = advComp.children().stream()
+            .map(this::adventureToNmsComponent)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+        if(textContent != null && textContent.isEmpty()) {
+            if(nmsChildren.isEmpty())
+                return null;
+
+            nmsComp = nmsChildren.get(0);
+            nmsChildren.remove(0);
+        }
+
+        nmsChildren.forEach(nmsComp::append);
+        return nmsComp;
     }
 
     private void addPacketListenerToPipeline(final @Nonnull Player player) {
@@ -74,8 +177,8 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 System.out.printf("packedItems: %s%n", packet.packedItems());
 
                 // TODO:
-                // final LivingEntity entity = ???;
-                // final Component customName = generateEntityLabelComponent(entity);
+                final LivingEntity entity = Objects.requireNonNull(null);
+                final Component customName = generateEntityLabelComponent(entity);
 
                 super.write(context, message, promise);
             }
@@ -103,7 +206,7 @@ public class NmsLabelUtil implements LabelUtil, Listener {
         final ServerPlayer playerHandle = ((CraftPlayer) player).getHandle();
         final ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(
             entity.getEntityId(),
-            new ArrayList<>()
+            new SynchedEntityData(null).getNonDefaultValues()
         );
         playerHandle.connection.send(packet);
         DebugStat.metadataUpdates++;
