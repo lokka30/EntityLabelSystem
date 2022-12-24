@@ -4,7 +4,7 @@ commands:
   "els":
     description: "Utilities to manage the ELS plugin."
     usage: "/<command>"
-depend: ["ProtocolLib"]
+softdepend: ["ProtocolLib"]
 main: "io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem"
 name: "EntityLabelSystem"
 permissions:

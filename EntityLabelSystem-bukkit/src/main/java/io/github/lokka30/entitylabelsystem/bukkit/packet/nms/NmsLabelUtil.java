@@ -18,6 +18,7 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.format.TextDecoration.State;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ComponentContents;
 import net.minecraft.network.chat.MutableComponent;
@@ -27,9 +28,14 @@ import net.minecraft.network.chat.contents.LiteralContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_19_R2.CraftWorld;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -158,9 +164,10 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 /*
                 TODO:
                     ✔ Ensure the outgoing packet is an entity metadata packet
-                    ⨯ Retrieve entity instance
-                    ⨯ Ensure entity is instanceof LivingEntity
-                    ⨯ Ensure entity type is not a Player
+                    ✔ Retrieve entity instance
+                    ✔ Ensure entity is instanceof LivingEntity
+                    ✔ Ensure entity type is not a Player
+                    ✔ Generate CustomName NMS component.
                     ⨯ Replace the custom name field in the entity metadata packet with
                       the component.
                  */
@@ -171,15 +178,46 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                     return;
                 }
 
-                // Debug information (ignore).
-                System.out.printf("[Intercepted Entity Metadata Packet]%n");
-                System.out.printf("packedItems-size: %s%n", packet.packedItems().size());
-                System.out.printf("packedItems: %s%n", packet.packedItems());
-                System.out.printf("id: %s%n", packet.id());
+                final int entityId = packet.id();
 
-                // TODO:
-                final LivingEntity entity = Objects.requireNonNull(null);
-                final Component customName = generateEntityLabelComponent(entity);
+                // Debug information (ignore).
+                System.out.println("[Intercepted Entity Metadata Packet]");
+                System.out.println("Entity ID: " + entityId);
+                if(packet.packedItems() == null) {
+                    System.out.println("packedItems == null");
+                } else {
+                    System.out.println("packedItems-size: " + packet.packedItems().size());
+                    System.out.println("packedItems: " + packet.packedItems());
+                }
+
+                final Entity entity = getEntityById(entityId);
+
+                if(entity == null) {
+                    System.out.println("Unable to find entity by integer ID.");
+                    super.write(context, message, promise);
+                    return;
+                }
+
+                if(!(entity instanceof final LivingEntity lent)) {
+                    System.out.printf("'%s' is not a LivingEntity", entity.getType());
+                    super.write(context, message, promise);
+                    return;
+                }
+
+                if(lent.getType() == EntityType.PLAYER) {
+                    super.write(context, message, promise);
+                    return;
+                }
+
+                final Component customNameComponent = generateEntityLabelComponent(lent);
+                System.out.printf("Generated custom name: '%s'",
+                    PlainTextComponentSerializer.plainText().serialize(customNameComponent));
+
+                final net.minecraft.network.chat.Component customNameNmsComponent =
+                    adventureToNmsComponent(customNameComponent);
+
+                //TODO set custom name to component.
+                //TODO set customnamevisible to true
 
                 super.write(context, message, promise);
             }
@@ -216,5 +254,28 @@ public class NmsLabelUtil implements LabelUtil, Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(final PlayerJoinEvent event) {
         addPacketListenerToPipeline(event.getPlayer());
+    }
+
+    private static @Nullable Entity getEntityById(final int entityId) {
+        try {
+            return Bukkit.getScheduler().callSyncMethod(
+                EntityLabelSystem.instance(),
+                () -> {
+                    for(final World world : Bukkit.getServer().getWorlds()) {
+                        final ServerLevel nmsWorld = ((CraftWorld) world).getHandle();
+                        final net.minecraft.world.entity.Entity entity =
+                            nmsWorld.getEntity(entityId);
+                        if(entity == null) continue;
+                        return entity.getBukkitEntity();
+                    }
+
+                    return null;
+                }
+            ).get();
+        } catch(final Exception ex) {
+            EntityLabelSystem.instance().getLogger().severe("Unable to get entity by ID.");
+            ex.printStackTrace();
+            return null;
+        }
     }
 }

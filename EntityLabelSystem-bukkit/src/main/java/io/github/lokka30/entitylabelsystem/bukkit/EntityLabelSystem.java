@@ -5,7 +5,7 @@ import com.comphenix.protocol.ProtocolManager;
 import io.github.lokka30.entitylabelsystem.bukkit.command.ElsCommand;
 import io.github.lokka30.entitylabelsystem.bukkit.listener.PacketLabelUpdateListener;
 import io.github.lokka30.entitylabelsystem.bukkit.packet.LabelUtil;
-import io.github.lokka30.entitylabelsystem.bukkit.packet.protocollib.ProtocolLibLabelUtil;
+import io.github.lokka30.entitylabelsystem.bukkit.packet.nms.NmsLabelUtil;
 import io.github.lokka30.entitylabelsystem.bukkit.util.DebugStat;
 import java.util.Objects;
 import org.bukkit.Bukkit;
@@ -18,7 +18,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class EntityLabelSystem extends JavaPlugin {
 
-    public static final LabelUtil LABEL_UTIL_IMPL = new ProtocolLibLabelUtil();
+    public static final LabelUtil LABEL_UTIL_IMPL = new NmsLabelUtil();
 
     private static EntityLabelSystem instance;
     private static ProtocolManager protocolManager;
@@ -39,7 +39,9 @@ public class EntityLabelSystem extends JavaPlugin {
     @Override
     public void onLoad() {
         instance = this;
-        protocolManager = ProtocolLibrary.getProtocolManager();
+        if(Bukkit.getPluginManager().isPluginEnabled("ProtocolLib")) {
+            protocolManager = ProtocolLibrary.getProtocolManager();
+        }
     }
 
     @Override
