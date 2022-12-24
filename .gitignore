@@ -1,3 +1,6 @@
+# Local development and testing files
+local/
+
 # IntelliJ IDEA
 .idea/
 *.iml

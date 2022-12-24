@@ -14,6 +14,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -39,87 +40,98 @@ public class ElsCommand implements TabExecutor {
             final PluginDescriptionFile pdf = instance().getDescription();
             sender.sendMessage(
                 AQUA + "EntityLabelSystem v" + pdf.getVersion(),
-                GRAY + "Authors: " + pdf.getAuthors(),
-                GRAY + "For a list of subcommands, run '/" + label + " help'."
+                GRAY + " • Authors: " + pdf.getAuthors(),
+                GRAY + " • For a list of subcommands, run '/" + label + " help'."
             );
             return true;
         }
 
-        //noinspection EnhancedSwitchMigration
         switch (args[0].toUpperCase(Locale.ROOT)) {
-            case "HELP":
-                if(args.length > 1) {
+            case "HELP" -> {
+                if (args.length > 1) {
                     sender.sendMessage(RED + "Invalid usage: '/" + label + " help'");
                     return true;
                 }
-
                 sender.sendMessage(
                     AQUA + "[/" + label + " • Command Help]",
                     AQUA + "help" + GRAY + " • View command help.",
                     AQUA + "reload" + GRAY + " • Reload the plugin's configuration.",
                     AQUA + "zombie" + GRAY + " • Spawn in a test dummy zombie.",
+                    AQUA + "list-ids" + GRAY + " • List all entity IDs in your world.",
                     AQUA + "metric" + GRAY + " • Metrics collected during this session."
                 );
-                return true;
-
-            case "RELOAD":
-                if(args.length > 1) {
+            }
+            case "RELOAD" -> {
+                if (args.length > 1) {
                     sender.sendMessage(RED + "Invalid usage: '/" + label + " help'");
                     return true;
                 }
-
                 sender.sendMessage(GRAY + "Reloading...");
-
                 try {
                     instance().reload();
-                } catch(final Exception ex) {
+                } catch (final Exception ex) {
                     instance().getLogger().severe("Reload subcommand failed. Stack trace:");
                     ex.printStackTrace();
                     sender.sendMessage(RED + "Reload failed; see server console for more info.");
                     return true;
                 }
-
                 sender.sendMessage(GREEN + "Reload complete.");
-                return true;
-
-            case "ZOMBIE":
-
-                if(args.length > 1) {
+            }
+            case "ZOMBIE" -> {
+                if (args.length > 1) {
                     sender.sendMessage(RED + "Invalid usage: '/" + label + " zombie'");
                     return true;
                 }
-
-                if(!(sender instanceof Player player)) {
+                if (!(sender instanceof final Player player)) {
                     sender.sendMessage(RED + "Invalid usage: Only players can run this command.");
                     return true;
                 }
-
                 final Zombie zombie = (Zombie) player.getWorld()
                     .spawnEntity(player.getLocation(), EntityType.ZOMBIE);
-
                 zombie.setAI(false);
                 zombie.setCollidable(false);
                 zombie.setGravity(false);
-
                 sender.sendMessage(GREEN + "A test zombie has spawned at your location.");
-                return true;
-
-            case "METRIC":
-
+            }
+            case "LIST-IDS" -> {
+                if (args.length > 1) {
+                    sender.sendMessage(RED + "Invalid usage: '/" + label + " list-ids'");
+                    return true;
+                }
+                if (!(sender instanceof final Player player)) {
+                    sender.sendMessage(RED + "Invalid usage: Only players can run this command.");
+                    return true;
+                }
+                sender.sendMessage(AQUA + "Entity IDs in world '%s':"
+                    .formatted(player.getWorld().getName()));
+                for (final LivingEntity entity : player.getWorld().getLivingEntities()) {
+                    sender.sendMessage(
+                        GRAY + " • type='%s'; id='%s'; distance='%s'".formatted(
+                            entity.getType().name(),
+                            entity.getEntityId(),
+                            (player.getLocation().distance(entity.getLocation()) * 100d) / 100d
+                        )
+                    );
+                }
+                sender.sendMessage(GRAY + "Scanned '%s' living entities."
+                    .formatted(player.getWorld().getLivingEntities().size()));
+            }
+            case "METRIC" -> {
                 sender.sendMessage(
                     AQUA + "Test metrics for the current session:",
                     GRAY + " • Entity metadata updates sent: " + DebugStat.metadataUpdates,
                     GRAY + " • Entity metadata packets modified: " + DebugStat.metadataModified
                 );
-                return true;
-
-            default:
+            }
+            default -> {
                 sender.sendMessage(
                     RED + "Invalid usage: unknown subcommand '" + args[0] + "'.",
                     GRAY + "For a list of subcommands, run '/" + label + " help'."
                 );
-                return true;
+            }
         }
+
+        return true;
     }
 
     @Override

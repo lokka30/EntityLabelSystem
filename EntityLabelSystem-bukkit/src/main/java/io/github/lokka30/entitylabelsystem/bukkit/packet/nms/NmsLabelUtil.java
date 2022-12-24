@@ -172,9 +172,10 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 }
 
                 // Debug information (ignore).
-                System.out.printf("[Intercepted Entity Metadata Packet - ID: %s]%n", packet.id());
+                System.out.printf("[Intercepted Entity Metadata Packet]%n");
                 System.out.printf("packedItems-size: %s%n", packet.packedItems().size());
                 System.out.printf("packedItems: %s%n", packet.packedItems());
+                System.out.printf("id: %s%n", packet.id());
 
                 // TODO:
                 final LivingEntity entity = Objects.requireNonNull(null);
