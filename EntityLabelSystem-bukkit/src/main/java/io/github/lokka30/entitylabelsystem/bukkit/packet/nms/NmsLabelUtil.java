@@ -10,6 +10,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -29,6 +30,8 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.LiteralContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.SynchedEntityData.DataValue;
 import net.minecraft.server.level.ServerLevel;
@@ -182,7 +185,9 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                     return;
                 }
 
-                if(packet.packedItems() == null) {
+                final List<DataValue<?>> items = packet.packedItems();
+
+                if(items == null) {
                     debugLog("(!) Skipped a packet as packedItems was null.");
                     super.write(context, message, promise);
                     return;
@@ -211,8 +216,8 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 debugLog(" • Entity ID: " + entityId);
                 debugLog(" • Entity Type: " + entity.getType().name());
 
-                debugLog(" • Packed Items (" + packet.packedItems().size() + "):");
-                for(final DataValue<?> dataValue : packet.packedItems()) {
+                debugLog(" • Packed Items (" + items.size() + "):");
+                for(final DataValue<?> dataValue : items) {
                     debugLog("   • • Class: " + dataValue.getClass().getName());
                     debugLog("     • ID: " + dataValue.id());
                     debugLog("     • Value: " + dataValue.value());
@@ -225,11 +230,64 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 debugLog(" • Generated CustomName: " +
                     LegacyComponentSerializer.legacySection().serialize(customNameComponent));
 
-                //final net.minecraft.network.chat.Component customNameNmsComponent =
-                //    adventureToNmsComponent(customNameComponent);
+                final net.minecraft.network.chat.Component customNameNmsComponent =
+                    adventureToNmsComponent(customNameComponent);
+
+                final boolean customNameVisible = true;
 
                 //TODO set custom name to component.
                 //TODO set customnamevisible to true
+
+                Integer idxNameComponent = null;
+                Integer idxNameVisible = null;
+
+                for (int i = 0; i < items.size(); i++) {
+                    final DataValue<?> item = items.get(i);
+                    //if(item.id() == 4) idxNameComponent = i;
+                    //if(item.id() == 5) idxNameVisible = i;
+                    if(item.id() == 2) idxNameComponent = i;
+                    if(item.id() == 3) idxNameVisible = i;
+                }
+
+
+                SynchedEntityData.DataValue<?> dataValueComponent =
+                    new SynchedEntityData.DataItem<>(
+                        new EntityDataAccessor<>(
+                            //4,
+                            2,
+                            EntityDataSerializers.OPTIONAL_COMPONENT
+                        ),
+                        Optional.ofNullable(customNameNmsComponent)
+                    ).value();
+
+                if(idxNameComponent == null) {
+                    debugLog(" • CustomName item missing; adding.");
+                    items.add(dataValueComponent);
+                } else {
+                    debugLog(" • CustomName index available, setting.");
+                    items.set(idxNameComponent, dataValueComponent);
+                }
+                debugLog(" • CustomName modified.");
+
+
+                SynchedEntityData.DataValue<Boolean> dataValueVisible =
+                    new SynchedEntityData.DataItem<>(
+                        new EntityDataAccessor<>(
+                            //5,
+                            3,
+                            EntityDataSerializers.BOOLEAN
+                        ),
+                        customNameVisible
+                    ).value();
+
+                if (idxNameVisible == null) {
+                    debugLog(" • CustomNameVisible item missing; adding.");
+                    items.add(dataValueVisible);
+                } else {
+                    debugLog(" • CustomNameVisible index available, setting.");
+                    items.set(idxNameVisible,dataValueVisible);
+                }
+                debugLog(" • CustomNameVisible modified.");
 
                 /*
                 possibly useful:
@@ -274,7 +332,9 @@ public class NmsLabelUtil implements LabelUtil, Listener {
         addPacketListenerToPipeline(event.getPlayer());
     }
 
-    private static @Nullable Entity getEntityById(final int entityId) {
+    private static @Nullable net.minecraft.world.entity.Entity getNmsEntityById(
+        final int entityId
+    ) {
         try {
             return Bukkit.getScheduler().callSyncMethod(
                 EntityLabelSystem.instance(),
@@ -284,7 +344,7 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                         final net.minecraft.world.entity.Entity entity =
                             nmsWorld.getEntity(entityId);
                         if(entity == null) continue;
-                        return entity.getBukkitEntity();
+                        return entity;
                     }
 
                     return null;
@@ -295,5 +355,9 @@ public class NmsLabelUtil implements LabelUtil, Listener {
             ex.printStackTrace();
             return null;
         }
+    }
+
+    private static @Nullable Entity getEntityById(final int entityId) {
+        return Objects.requireNonNull(getNmsEntityById(entityId)).getBukkitEntity();
     }
 }

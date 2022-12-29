@@ -26,6 +26,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Zombie;
 
+@SuppressWarnings("unused")
 public class ProtocolLibLabelUtil implements LabelUtil {
 
     @Override

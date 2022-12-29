@@ -57,7 +57,7 @@ public class ElsCommand implements TabExecutor {
                     AQUA + "help" + GRAY + " • View command help.",
                     AQUA + "reload" + GRAY + " • Reload the plugin's configuration.",
                     AQUA + "zombie" + GRAY + " • Spawn in a test dummy zombie.",
-                    AQUA + "list-ids" + GRAY + " • List all entity IDs in your world.",
+                    AQUA + "list" + GRAY + " • List all entities in your world.",
                     AQUA + "metric" + GRAY + " • Metrics collected during this session."
                 );
             }
@@ -93,24 +93,24 @@ public class ElsCommand implements TabExecutor {
                 zombie.setGravity(false);
                 sender.sendMessage(GREEN + "A test zombie has spawned at your location.");
             }
-            case "LIST-IDS" -> {
+            case "LIST" -> {
                 if (args.length > 1) {
-                    sender.sendMessage(RED + "Invalid usage: '/" + label + " list-ids'");
+                    sender.sendMessage(RED + "Invalid usage: '/" + label + " list'");
                     return true;
                 }
                 if (!(sender instanceof final Player player)) {
                     sender.sendMessage(RED + "Invalid usage: Only players can run this command.");
                     return true;
                 }
-                sender.sendMessage(AQUA + "Entity IDs in world '%s':"
+                sender.sendMessage(AQUA + "Entities in world '%s':"
                     .formatted(player.getWorld().getName()));
                 for (final LivingEntity entity : player.getWorld().getLivingEntities()) {
                     sender.sendMessage(
-                        GRAY + " • type='%s'; id='%s'; distance='%s'".formatted(
-                            entity.getType().name(),
-                            entity.getEntityId(),
-                            (player.getLocation().distance(entity.getLocation()) * 100d) / 100d
-                        )
+                        GRAY + " • • Type: " + entity.getType().name(),
+                        GRAY + "   • ID: " + entity.getEntityId(),
+                        GRAY + "   • CustomName: " + entity.getCustomName(),
+                        GRAY + "   • CustomNameVisible: " + entity.isCustomNameVisible(),
+                        GRAY + "   • Distance: " + (player.getLocation().distance(entity.getLocation()) * 100d) / 100d
                     );
                 }
                 sender.sendMessage(GRAY + "Scanned '%s' living entities."
