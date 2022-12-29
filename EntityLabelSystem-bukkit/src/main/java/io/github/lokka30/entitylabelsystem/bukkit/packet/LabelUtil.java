@@ -1,5 +1,8 @@
 package io.github.lokka30.entitylabelsystem.bukkit.packet;
 
+import static io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem.debugLog;
+
+import io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -16,9 +19,22 @@ public interface LabelUtil {
     default void sendUpdatePacket(
         final LivingEntity entity
     ) {
+        if(!EntityLabelSystem.DO_UPDATE_PACKETS) return;
+
+        debugLog("--- START sending update packets ---");
+
         for(final Player player : entity.getWorld().getPlayers()) {
+            debugLog("--- START sending update packet ---");
+            debugLog("entityId: " + entity.getEntityId());
+            debugLog("entityType: " + entity.getType().name());
+            debugLog("packetRecipient: " + player.getName());
+
             sendUpdatePacket(entity, player);
+
+            debugLog("--- DONE sending update packet ---");
         }
+
+        debugLog("--- DONE sending update packets ---");
     }
 
     void sendUpdatePacket(
@@ -36,7 +52,7 @@ public interface LabelUtil {
 
         return Component.text("Lvl." + lvl + " ").color(NamedTextColor.BLUE)
             .append(Component.text(entity.getName()).color(NamedTextColor.WHITE))
-            .append(Component.text("(").color(NamedTextColor.DARK_GRAY))
+            .append(Component.text(" (").color(NamedTextColor.DARK_GRAY))
             .append(Component.text(health).color(NamedTextColor.RED))
             .append(Component.text("/").color(NamedTextColor.DARK_GRAY))
             .append(Component.text(maxHealth + " ❤").color(NamedTextColor.RED))

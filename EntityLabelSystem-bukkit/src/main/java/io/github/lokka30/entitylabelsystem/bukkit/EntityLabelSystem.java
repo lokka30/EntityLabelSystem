@@ -19,6 +19,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class EntityLabelSystem extends JavaPlugin {
 
     public static final LabelUtil LABEL_UTIL_IMPL = new NmsLabelUtil();
+    public static final boolean DO_UPDATE_PACKETS = false;
 
     private static EntityLabelSystem instance;
     private static ProtocolManager protocolManager;
@@ -50,6 +51,11 @@ public class EntityLabelSystem extends JavaPlugin {
         loadCommands();
         loadListeners();
         loadTasks();
+    }
+
+    @Override
+    public void onDisable() {
+        LABEL_UTIL_IMPL.unregisterListeners();
     }
 
     private void loadConfigs() {

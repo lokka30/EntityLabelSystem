@@ -1,5 +1,7 @@
 package io.github.lokka30.entitylabelsystem.bukkit.packet.nms;
 
+import static io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem.debugLog;
+
 import io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem;
 import io.github.lokka30.entitylabelsystem.bukkit.packet.LabelUtil;
 import io.github.lokka30.entitylabelsystem.bukkit.util.DebugStat;
@@ -18,7 +20,7 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.format.TextDecoration.State;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ComponentContents;
 import net.minecraft.network.chat.MutableComponent;
@@ -28,11 +30,13 @@ import net.minecraft.network.chat.contents.LiteralContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.network.syncher.SynchedEntityData.DataValue;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.v1_19_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_19_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -178,48 +182,62 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                     return;
                 }
 
-                final int entityId = packet.id();
-
-                // Debug information (ignore).
-                System.out.println("[Intercepted Entity Metadata Packet]");
-                System.out.println("Entity ID: " + entityId);
                 if(packet.packedItems() == null) {
-                    System.out.println("packedItems == null");
-                } else {
-                    System.out.println("packedItems-size: " + packet.packedItems().size());
-                    System.out.println("packedItems: " + packet.packedItems());
+                    debugLog("(!) Skipped a packet as packedItems was null.");
+                    super.write(context, message, promise);
+                    return;
                 }
 
+                final int entityId = packet.id();
                 final Entity entity = getEntityById(entityId);
 
                 if(entity == null) {
-                    System.out.println("Unable to find entity by integer ID.");
+                    debugLog("(!) Unable to find entity by integer ID.");
                     super.write(context, message, promise);
                     return;
                 }
 
-                if(!(entity instanceof final LivingEntity lent)) {
-                    System.out.printf("'%s' is not a LivingEntity", entity.getType());
+                if(!(entity instanceof final LivingEntity lentity)) {
                     super.write(context, message, promise);
                     return;
                 }
 
-                if(lent.getType() == EntityType.PLAYER) {
+                if(lentity.getType() == EntityType.PLAYER) {
                     super.write(context, message, promise);
                     return;
                 }
 
-                final Component customNameComponent = generateEntityLabelComponent(lent);
-                System.out.printf("Generated custom name: '%s'",
-                    PlainTextComponentSerializer.plainText().serialize(customNameComponent));
+                debugLog("--- START Intercepting EM Packet ---");
+                debugLog(" • Entity ID: " + entityId);
+                debugLog(" • Entity Type: " + entity.getType().name());
 
-                final net.minecraft.network.chat.Component customNameNmsComponent =
-                    adventureToNmsComponent(customNameComponent);
+                debugLog(" • Packed Items (" + packet.packedItems().size() + "):");
+                for(final DataValue<?> dataValue : packet.packedItems()) {
+                    debugLog("   • • Class: " + dataValue.getClass().getName());
+                    debugLog("     • ID: " + dataValue.id());
+                    debugLog("     • Value: " + dataValue.value());
+                    debugLog("     • Serializer: " +
+                        dataValue.serializer().getClass().getName());
+                }
+
+                final Component customNameComponent = generateEntityLabelComponent(lentity);
+
+                debugLog(" • Generated CustomName: " +
+                    LegacyComponentSerializer.legacySection().serialize(customNameComponent));
+
+                //final net.minecraft.network.chat.Component customNameNmsComponent =
+                //    adventureToNmsComponent(customNameComponent);
 
                 //TODO set custom name to component.
                 //TODO set customnamevisible to true
 
+                /*
+                possibly useful:
+                    - <https://github.com/MrGraycat/eGlow/blob/5a96a4a0bafabb59a49582057ec6fb827b3afa28/src/main/java/me/MrGraycat/eGlow/Util/Packets/OutGoing/PacketPlayOutEntityMetadata.java#L26-L36>
+                 */
+
                 super.write(context, message, promise);
+                debugLog("--- DONE Intercepting EM Packet ---");
             }
 
         };
@@ -245,7 +263,7 @@ public class NmsLabelUtil implements LabelUtil, Listener {
         final ServerPlayer playerHandle = ((CraftPlayer) player).getHandle();
         final ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(
             entity.getEntityId(),
-            new SynchedEntityData(null).getNonDefaultValues()
+            new SynchedEntityData(((CraftEntity) entity).getHandle()).getNonDefaultValues()
         );
         playerHandle.connection.send(packet);
         DebugStat.metadataUpdates++;
@@ -273,7 +291,7 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 }
             ).get();
         } catch(final Exception ex) {
-            EntityLabelSystem.instance().getLogger().severe("Unable to get entity by ID.");
+            debugLog("(!) Unable to get entity by ID.");
             ex.printStackTrace();
             return null;
         }
