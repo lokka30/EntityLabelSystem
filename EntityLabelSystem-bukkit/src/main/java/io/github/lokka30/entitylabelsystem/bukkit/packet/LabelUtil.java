@@ -1,11 +1,11 @@
 package io.github.lokka30.entitylabelsystem.bukkit.packet;
 
-import static io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem.debugLog;
-
 import io.github.lokka30.entitylabelsystem.bukkit.EntityLabelSystem;
+import java.text.DecimalFormat;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -21,20 +21,22 @@ public interface LabelUtil {
     ) {
         if(!EntityLabelSystem.DO_UPDATE_PACKETS) return;
 
-        debugLog("--- START sending update packets ---");
+        //debugLog("--- START sending update packets ---");
 
         for(final Player player : entity.getWorld().getPlayers()) {
+            /*
             debugLog("--- START sending update packet ---");
             debugLog("entityId: " + entity.getEntityId());
             debugLog("entityType: " + entity.getType().name());
             debugLog("packetRecipient: " + player.getName());
+             */
 
             sendUpdatePacket(entity, player);
 
-            debugLog("--- DONE sending update packet ---");
+            //debugLog("--- DONE sending update packet ---");
         }
 
-        debugLog("--- DONE sending update packets ---");
+        //debugLog("--- DONE sending update packets ---");
     }
 
     void sendUpdatePacket(
@@ -45,17 +47,26 @@ public interface LabelUtil {
     default Component generateEntityLabelComponent(
         final LivingEntity entity
     ) {
-        final int lvl = ThreadLocalRandom.current().nextInt(1, 101);
-        final double health = (entity.getHealth() * 100) / 100;
-        //noinspection deprecation
-        final double maxHealth = (entity.getMaxHealth() * 100) / 100;
+        final int level = entity.getEntityId();
 
-        return Component.text("Lvl." + lvl + " ").color(NamedTextColor.BLUE)
-            .append(Component.text(entity.getName()).color(NamedTextColor.WHITE))
-            .append(Component.text(" (").color(NamedTextColor.DARK_GRAY))
+        final Component name = LegacyComponentSerializer.legacySection()
+            .deserialize("§f" + entity.getName());
+
+        final DecimalFormat df = new DecimalFormat("#,##0.00");
+
+        final String health = df.format(entity.getHealth());
+
+        //noinspection deprecation
+        final String maxHealth = df.format(entity.getMaxHealth()) + " ♥";
+
+        return Component.text("Lvl." + level).color(NamedTextColor.BLUE)
+            .appendSpace()
+            .append(name)
+            .appendSpace()
+            .append(Component.text("(").color(NamedTextColor.DARK_GRAY))
             .append(Component.text(health).color(NamedTextColor.RED))
             .append(Component.text("/").color(NamedTextColor.DARK_GRAY))
-            .append(Component.text(maxHealth + " ❤").color(NamedTextColor.RED))
+            .append(Component.text(maxHealth).color(NamedTextColor.RED))
             .append(Component.text(")").color(NamedTextColor.DARK_GRAY));
     }
 

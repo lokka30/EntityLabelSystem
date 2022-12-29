@@ -8,6 +8,7 @@ import io.github.lokka30.entitylabelsystem.bukkit.util.DebugStat;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,7 +22,6 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.format.TextDecoration.State;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ComponentContents;
 import net.minecraft.network.chat.MutableComponent;
@@ -55,9 +55,7 @@ public class NmsLabelUtil implements LabelUtil, Listener {
     private static final String PACKET_LISTENER_NAME = "EntityLabelSystem_EntityMetadata";
 
     public void registerListeners() {
-        for(final Player player : Bukkit.getOnlinePlayers())
-            addPacketListenerToPipeline(player);
-
+        for(final Player player : Bukkit.getOnlinePlayers()) addPacketListenerToPipeline(player);
         Bukkit.getPluginManager().registerEvents(this, EntityLabelSystem.instance());
     }
 
@@ -212,11 +210,12 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                     return;
                 }
 
-                debugLog("--- START Intercepting EM Packet ---");
-                debugLog(" • Entity ID: " + entityId);
-                debugLog(" • Entity Type: " + entity.getType().name());
+                //debugLog("--- START Intercepting EM Packet ---");
+                //debugLog(" • Entity ID: " + entityId);
+                //debugLog(" • Entity Type: " + entity.getType().name());
 
-                debugLog(" • Packed Items (" + items.size() + "):");
+                //debugLog(" • Packed Items (" + items.size() + "):");
+                /*
                 for(final DataValue<?> dataValue : items) {
                     debugLog("   • • Class: " + dataValue.getClass().getName());
                     debugLog("     • ID: " + dataValue.id());
@@ -224,27 +223,25 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                     debugLog("     • Serializer: " +
                         dataValue.serializer().getClass().getName());
                 }
+                 */
 
                 final Component customNameComponent = generateEntityLabelComponent(lentity);
 
+                /*
                 debugLog(" • Generated CustomName: " +
                     LegacyComponentSerializer.legacySection().serialize(customNameComponent));
+                 */
 
                 final net.minecraft.network.chat.Component customNameNmsComponent =
                     adventureToNmsComponent(customNameComponent);
 
                 final boolean customNameVisible = true;
 
-                //TODO set custom name to component.
-                //TODO set customnamevisible to true
-
                 Integer idxNameComponent = null;
                 Integer idxNameVisible = null;
 
                 for (int i = 0; i < items.size(); i++) {
                     final DataValue<?> item = items.get(i);
-                    //if(item.id() == 4) idxNameComponent = i;
-                    //if(item.id() == 5) idxNameVisible = i;
                     if(item.id() == 2) idxNameComponent = i;
                     if(item.id() == 3) idxNameVisible = i;
                 }
@@ -253,7 +250,6 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                 SynchedEntityData.DataValue<?> dataValueComponent =
                     new SynchedEntityData.DataItem<>(
                         new EntityDataAccessor<>(
-                            //4,
                             2,
                             EntityDataSerializers.OPTIONAL_COMPONENT
                         ),
@@ -261,19 +257,18 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                     ).value();
 
                 if(idxNameComponent == null) {
-                    debugLog(" • CustomName item missing; adding.");
+                    //debugLog(" • CustomName item missing; adding.");
                     items.add(dataValueComponent);
                 } else {
-                    debugLog(" • CustomName index available, setting.");
+                    //debugLog(" • CustomName item exists, modifying.");
                     items.set(idxNameComponent, dataValueComponent);
                 }
-                debugLog(" • CustomName modified.");
+                //debugLog(" • CustomName modified.");
 
 
                 SynchedEntityData.DataValue<Boolean> dataValueVisible =
                     new SynchedEntityData.DataItem<>(
                         new EntityDataAccessor<>(
-                            //5,
                             3,
                             EntityDataSerializers.BOOLEAN
                         ),
@@ -281,21 +276,18 @@ public class NmsLabelUtil implements LabelUtil, Listener {
                     ).value();
 
                 if (idxNameVisible == null) {
-                    debugLog(" • CustomNameVisible item missing; adding.");
+                    //debugLog(" • CustomNameVisible item missing; adding.");
                     items.add(dataValueVisible);
                 } else {
-                    debugLog(" • CustomNameVisible index available, setting.");
+                    //debugLog(" • CustomNameVisible item exists, modifying.");
                     items.set(idxNameVisible,dataValueVisible);
                 }
-                debugLog(" • CustomNameVisible modified.");
+                //debugLog(" • CustomNameVisible modified.");
 
-                /*
-                possibly useful:
-                    - <https://github.com/MrGraycat/eGlow/blob/5a96a4a0bafabb59a49582057ec6fb827b3afa28/src/main/java/me/MrGraycat/eGlow/Util/Packets/OutGoing/PacketPlayOutEntityMetadata.java#L26-L36>
-                 */
+                DebugStat.metadataModified++;
 
                 super.write(context, message, promise);
-                debugLog("--- DONE Intercepting EM Packet ---");
+                //debugLog("--- DONE Intercepting EM Packet ---");
             }
 
         };
@@ -318,11 +310,17 @@ public class NmsLabelUtil implements LabelUtil, Listener {
         final LivingEntity entity,
         final Player player
     ) {
+        final net.minecraft.world.entity.Entity entityHandle = ((CraftEntity) entity).getHandle();
         final ServerPlayer playerHandle = ((CraftPlayer) player).getHandle();
+
         final ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(
             entity.getEntityId(),
-            new SynchedEntityData(((CraftEntity) entity).getHandle()).getNonDefaultValues()
+            Objects.requireNonNullElse(
+                new SynchedEntityData(entityHandle).getNonDefaultValues(),
+                new LinkedList<>()
+            )
         );
+
         playerHandle.connection.send(packet);
         DebugStat.metadataUpdates++;
     }
@@ -357,7 +355,9 @@ public class NmsLabelUtil implements LabelUtil, Listener {
         }
     }
 
-    private static @Nullable Entity getEntityById(final int entityId) {
+    private static @Nullable Entity getEntityById(
+        final int entityId
+    ) {
         return Objects.requireNonNull(getNmsEntityById(entityId)).getBukkitEntity();
     }
 }
