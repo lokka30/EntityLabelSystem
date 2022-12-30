@@ -1,3 +1,9 @@
+> # This repository has been archived.
+> ### It has been replaced by [EntityLabelLib](https://github.com/ArcanePlugins/EntityLabelLib).
+> This archive remains available so that the links to this from Spigot threads of mine don't die.
+
+***
+
 # EntityLabelSystem
 
 This repository contains a test shell Bukkit plugin for the entity label (nametag) systems which
